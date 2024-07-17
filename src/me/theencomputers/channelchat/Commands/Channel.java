@@ -56,7 +56,7 @@ public class Channel implements CommandExecutor {
 
             }
 
-            else if(args.length >= 5 && args[0].equalsIgnoreCase("create")){
+            else if(args.length >= 5 && args[0].equalsIgnoreCase("create") && args[3].matches("[-+]?[0-9]*\\.?[0-9]+")){
                 if(!sender.hasPermission(ConfigHandler.CHANNEL_CREATE_PERMISSION)){
                     sender.sendMessage(ConfigHandler.NO_PERMISSION);
                     return  true;
@@ -85,7 +85,7 @@ public class Channel implements CommandExecutor {
                 sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_CREATED, new String[]{c.name}));
 
         }
-            else if(args.length >= 5 && args[0].equalsIgnoreCase("modify")){
+            else if(args.length >= 5 && args[0].equalsIgnoreCase("modify") && args[3].matches("[-+]?[0-9]*\\.?[0-9]+")){
                 if(!sender.hasPermission(ConfigHandler.CHANNEL_MODIFY_PERMISSION)){
                     sender.sendMessage(ConfigHandler.NO_PERMISSION);
                     return  true;
@@ -110,6 +110,28 @@ public class Channel implements CommandExecutor {
                 }
                 formatString += args[args.length-1];
                 c.format = formatString;
+                Main.channelNameToInfo.replace(c.name, c);
+
+                for(Player p: Bukkit.getOnlinePlayers()){
+                    if(Main.playerToMainChannel.containsKey(p) && Main.playerToMainChannel.get(p) != null && Main.playerToMainChannel.get(p).name.equals(c.name)){
+                        Main.playerToMainChannel.replace(p, c);
+                    }
+                    boolean remove = false;
+                    ChannelInfo chan = null;
+                    if(Main.playerToChannelList.containsKey(p) && Main.playerToChannelList.get(p) != null){
+                        for(ChannelInfo cInf: Main.playerToChannelList.get(p)){
+                            if(cInf.name.equals(c.name)){
+                                remove = true;
+                                chan = cInf;
+                            }
+                        }
+                        if(remove){
+                            Main.playerToChannelList.get(p).remove(chan);
+                            Main.playerToChannelList.get(p).add(c); 
+                        }
+                    }
+
+                }
                 pushChannel(c);
                 sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_MODIFIED, new String[]{c.name}));
             }
@@ -121,6 +143,7 @@ public class Channel implements CommandExecutor {
                 }
                 if(Main.channelNameToInfo.containsKey(args[1]) && Main.playerToChannelList.get(player).contains(Main.channelNameToInfo.get(args[1]))){
                         removePlayerFromChannel(player, Main.channelNameToInfo.get(args[1]));
+                        player.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{args[1]}));
                 }
                 else{
                     sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
@@ -160,7 +183,7 @@ public class Channel implements CommandExecutor {
             if (Main.playerToChannelList.containsKey(p) && Main.playerToChannelList.get(p).contains(c)) {
                 Main.playerToChannelList.get(p).remove(c);
             }
-            if (Main.playerToMainChannel.containsKey(p) && Main.playerToMainChannel.get(p).equals(c)){
+            if (Main.playerToMainChannel.containsKey(p) && Main.playerToMainChannel.get(p) != null && Main.playerToMainChannel.get(p).equals(c)){
                 p.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{c.name}));
                 ChannelInfo blankChannel = new ChannelInfo();
                 blankChannel.format = "";

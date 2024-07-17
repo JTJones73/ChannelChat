@@ -217,11 +217,13 @@ public class SqlHandler {
                 String name = resultSet.getString("name");
                 String format = resultSet.getString("format");
                 String permission = resultSet.getString("permission");
+                float radius = resultSet.getFloat("radius");
                 //Bukkit.getConsoleSender().sendMessage("Retrieved data: " + name);     //DEBUG
                 ChannelInfo c = new ChannelInfo();
                 c.name = name;
                 c.format = format;
                 c.permission = permission;
+                c.radius = radius;
                 Main.channelNameToInfo.put(name, c);
 
 

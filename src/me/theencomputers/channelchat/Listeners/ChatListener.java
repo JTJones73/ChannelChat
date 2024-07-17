@@ -27,20 +27,22 @@ public class ChatListener implements Listener{
         e.setCancelled(true);
 
         boolean anyoneListening = false;
-        if(Main.playerToMainChannel.containsKey(e.getPlayer()) && !e.getPlayer().hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)){
-            e.getPlayer().sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHAT_NO_PERMISSION, new String[]{Main.playerToMainChannel.get(e.getPlayer()).name}));
+        if (!Main.playerToMainChannel.containsKey(e.getPlayer()) || Main.playerToMainChannel.get(e.getPlayer()) == null || Main.playerToMainChannel.get(e.getPlayer()).name.equals("")) {
+            e.getPlayer().sendMessage(ConfigHandler.CHAT_NO_CHANNELS);
         }
+
         else {
-            if (Main.playerToMainChannel.get(e.getPlayer()) == null) {
-                e.getPlayer().sendMessage(ConfigHandler.CHAT_NO_LISTENERS);
+            if(Main.playerToMainChannel.containsKey(e.getPlayer()) && !e.getPlayer().hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)){
+                e.getPlayer().sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHAT_NO_PERMISSION, new String[]{Main.playerToMainChannel.get(e.getPlayer()).name}));
             }
             else {
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     boolean sendPlayer = false;
                     for (ChannelInfo c : Main.playerToChannelList.get(p)) {
 
-                        if (c.equals(Main.playerToMainChannel.get(e.getPlayer())) && p.hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)) {
+                        if (c.name.equals(Main.playerToMainChannel.get(e.getPlayer()).name) && p.hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)) {
                             //range check
+                            //Bukkit.getConsoleSender().sendMessage(p.getName() + c.name + c.permission + c.format + c.radius + (c.radius < 0) + " " + (p.getLocation().getWorld().equals(e.getPlayer().getLocation().getWorld()) && p.getLocation().distance(e.getPlayer().getLocation()) <= c.radius));
                             if (c.radius < 0 || (p.getLocation().getWorld().equals(e.getPlayer().getLocation().getWorld()) && p.getLocation().distance(e.getPlayer().getLocation()) <= c.radius)) {
                                 sendPlayer = true;
                                 if (!p.equals(e.getPlayer()))

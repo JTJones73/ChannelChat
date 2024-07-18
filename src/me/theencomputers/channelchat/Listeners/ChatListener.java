@@ -40,7 +40,7 @@ public class ChatListener implements Listener{
                     boolean sendPlayer = false;
                     for (ChannelInfo c : Main.playerToChannelList.get(p)) {
 
-                        if (c.name.equals(Main.playerToMainChannel.get(e.getPlayer()).name) && p.hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)) {
+                        if (c!= null && c.name.equals(Main.playerToMainChannel.get(e.getPlayer()).name) && p.hasPermission(Main.playerToMainChannel.get(e.getPlayer()).permission)) {
                             //range check
                             //Bukkit.getConsoleSender().sendMessage(p.getName() + c.name + c.permission + c.format + c.radius + (c.radius < 0) + " " + (p.getLocation().getWorld().equals(e.getPlayer().getLocation().getWorld()) && p.getLocation().distance(e.getPlayer().getLocation()) <= c.radius));
                             if (c.radius < 0 || (p.getLocation().getWorld().equals(e.getPlayer().getLocation().getWorld()) && p.getLocation().distance(e.getPlayer().getLocation()) <= c.radius)) {

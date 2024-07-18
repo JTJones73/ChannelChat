@@ -177,7 +177,7 @@ public class Channel implements CommandExecutor {
         pushChannel(c);
     }
     public static boolean removeChannel(ChannelInfo c){
-        if(Main.channelNameToInfo.containsKey(c))
+        if(Main.channelNameToInfo.containsKey(c.name))
             Main.channelNameToInfo.remove(c.name);
         for(Player p: Bukkit.getOnlinePlayers()) {
             if (Main.playerToChannelList.containsKey(p) && Main.playerToChannelList.get(p).contains(c)) {

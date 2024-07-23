@@ -1,8 +1,0 @@
-name: ChannelChat
-main: me.theencomputers.channelchat.Main
-version: 0.1.0
-api-version: 1.20
-commands:
-   channel:
-      description: modify or join channel
-      usage: /channel <action>

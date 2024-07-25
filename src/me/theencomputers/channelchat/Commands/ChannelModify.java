@@ -27,7 +27,7 @@ public class ChannelModify implements SubCommand{
             return;
         }
         if(!cm.doesChannelExist(args[1])){
-            sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
+            sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
             return;
         }
         String formatString = "";
@@ -37,6 +37,6 @@ public class ChannelModify implements SubCommand{
         formatString += args[args.length-1];
         ChannelInfo c = cm.getChannel(args[1]);
         cm.modifyChannel(c,args[2],parseFloat(args[3]), formatString);
-        sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_MODIFIED, new String[]{args[1]}));
+        sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_MODIFIED, new String[]{args[1]}));
     }
 }

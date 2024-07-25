@@ -16,6 +16,7 @@ public class ChannelManager {
     private static HashMap<Player, ArrayList<ChannelInfo>> playerToChannelList = new HashMap<>();
     private static HashMap<String, ChannelInfo> channelNameToInfo = new HashMap<>();
     private static SqlHandler sql = new SqlHandler();
+    ConfigHandler cfg = new ConfigHandler();
 
     public boolean doesChannelExist(ChannelInfo c){
         if(channelNameToInfo.containsValue(c) || sql.retrieveChannel(c.name))
@@ -43,7 +44,7 @@ public class ChannelManager {
     public ArrayList<ChannelInfo> getChannelList(Player p){
         return playerToChannelList.getOrDefault(p, null);
     }
-    public void addPlayerToChannel(ChannelInfo c, Player p){
+    public void addPlayerToChannel(ChannelInfo c, Player p, Boolean pushSql){
         if(!playerToChannelList.containsKey(p)){
             ArrayList<ChannelInfo> cInf = new ArrayList<ChannelInfo>();
             playerToChannelList.put(p, cInf);
@@ -55,7 +56,8 @@ public class ChannelManager {
             playerToMainChannel.replace(p, c);
         else
             playerToMainChannel.put(p, c);
-        pushPlayer(p);
+        if(pushSql)
+            pushPlayer(p);
     }
     public boolean removePlayerFromChannel(ChannelInfo c, Player p){
         if(!playerToChannelList.get(p).contains(c))
@@ -73,12 +75,13 @@ public class ChannelManager {
         pushPlayer(p);
         return true;
     }
-    public ChannelInfo addChannel(String name, String perm, float radius, String format){
+    public ChannelInfo addChannel(String name, String perm, float radius, String format, boolean pushSql){
         if(channelNameToInfo.containsKey(name))
-            return null;
+            return channelNameToInfo.get(name);
         ChannelInfo c = new ChannelInfo(name, perm, radius, format);
         channelNameToInfo.put(name, c);
-        pushChannel(c);
+        if(pushSql)
+            pushChannel(c);
         return c;
     }
     public void modifyChannel(ChannelInfo channel, String perm, float radius, String format) {
@@ -93,7 +96,7 @@ public class ChannelManager {
             ChannelInfo chan = null;
             if (playerToChannelList.containsKey(p) && playerToChannelList.get(p) != null) {
                 for (ChannelInfo cInf : playerToChannelList.get(p)) {
-                    if (cInf.name.equals(c.name)) {
+                    if (cInf != null && cInf.name.equals(c.name)) {
                         remove = true;
                         chan = cInf;
                     }
@@ -114,12 +117,13 @@ public class ChannelManager {
             playerToChannelList.put(p, cList);
         pushPlayer(p);
     }
-    public void addPlayerMainChannel(Player p, ChannelInfo c){
+    public void addPlayerMainChannel(Player p, ChannelInfo c, boolean pushSql){
         if(playerToMainChannel.containsKey(p))
             playerToMainChannel.replace(p, c);
         else
             playerToMainChannel.put(p, c);
-        pushPlayer(p);
+        if(pushSql)
+            pushPlayer(p);
     }
     public void addPlayer(Player p){
         playerToMainChannel.put(p, null);
@@ -139,7 +143,7 @@ public class ChannelManager {
                 playerToChannelList.get(p).remove(c);
             }
             if (playerToMainChannel.containsKey(p) && playerToMainChannel.get(p) != null && playerToMainChannel.get(p).equals(c)){
-                p.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{c.name}));
+                p.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{c.name}));
                 ChannelInfo blankChannel = new ChannelInfo("","",0,"");
                 playerToMainChannel.replace(p, blankChannel);
             }

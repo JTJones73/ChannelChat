@@ -32,7 +32,6 @@ private static HashMap<String, SubCommand> subCmdExec = new HashMap<>();
     }
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-            Bukkit.broadcastMessage((args.length > 0) + " " + subCmdExec.containsKey(args[0].toLowerCase()) + " " + subCmdExec.get(args[0].toLowerCase()).verifyCommand(sender, args));
             if(args.length > 0 && subCmdExec.containsKey(args[0].toLowerCase()) && subCmdExec.get(args[0].toLowerCase()).verifyCommand(sender, args)){
                 subCmdExec.get(args[0].toLowerCase()).executeSubCommand(sender, args);
             }

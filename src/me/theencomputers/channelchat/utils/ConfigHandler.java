@@ -85,7 +85,7 @@ public class ConfigHandler {
 
 
   }
-  public static String applyPlaceholders(String str, String [] values) {
+  public String applyPlaceholders(String str, String [] values) {
       for(int i = 0; i < values.length; i++){
               str = str.replace("%" + i + "%", values[i]);
       }

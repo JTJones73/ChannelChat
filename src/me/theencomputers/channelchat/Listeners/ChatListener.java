@@ -21,11 +21,10 @@ import me.theencomputers.channelchat.utils.ConfigHandler;
 public class ChatListener implements Listener{
 	public static ArrayList<String> Muted= new ArrayList<String>();
     ChannelManager cm = new ChannelManager();
-
+    ConfigHandler cfg = new ConfigHandler();
         
     @EventHandler
 	public void playerChat(AsyncPlayerChatEvent e) {
-        //e.getPlayer().sendMessage("Used chat for message: " + e.getMessage());                  //DEBUG
         e.setCancelled(true);
         Player player = e.getPlayer();
         boolean anyoneListening = false;
@@ -35,7 +34,7 @@ public class ChatListener implements Listener{
 
         else {
             if(!player.hasPermission(cm.getMainChannel(player).permission)){
-                player.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHAT_NO_PERMISSION, new String[]{cm.getMainChannel(player).name}));
+                player.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHAT_NO_PERMISSION, new String[]{cm.getMainChannel(player).name}));
             }
             else {
                 for (Player p : Bukkit.getOnlinePlayers()) {
@@ -60,7 +59,7 @@ public class ChatListener implements Listener{
                 }
 
                 if (!anyoneListening)
-                    player.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHAT_NO_LISTENERS, new String[]{cm.getMainChannel(player).name}));
+                    player.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHAT_NO_LISTENERS, new String[]{cm.getMainChannel(player).name}));
             }
             Bukkit.getConsoleSender().sendMessage(cm.getMainChannel(player).format.replace("%MESSAGE%", e.getMessage())
                     .replace("%PLAYER%",player.getDisplayName())

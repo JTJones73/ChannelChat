@@ -21,7 +21,7 @@ public class ChannelLeave implements SubCommand{
     public void executeSubCommand(CommandSender sender, String[] args) {
         Player player = (Player) sender;
         if(!cm.isPlayerInChannel(player, cm.getChannel(args[1]))){
-            sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
+            sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
             return;
         }
         if(!sql.isSafe(args[1])){
@@ -30,10 +30,10 @@ public class ChannelLeave implements SubCommand{
         }
         if(cm.doesChannelExist(cm.getChannel(args[1]))) {
             cm.removePlayerFromChannel(cm.getChannel(args[1]), player);
-            player.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{args[1]}));
+            player.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_YOU_LEFT, new String[]{args[1]}));
         }
         else
-            sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
+            sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
 
     }
 }

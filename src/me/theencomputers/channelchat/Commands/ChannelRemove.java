@@ -25,10 +25,10 @@ public class ChannelRemove implements SubCommand{
         if(sender.hasPermission(ConfigHandler.CHANNEL_REMOVE_PERMISSION)){
                 if(cm.doesChannelExist(args[1])){
                         cm.removeChannel(cm.getChannel(args[1]));
-                        sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_DELETED, new String[]{args[1]}));
+                        sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_DELETED, new String[]{args[1]}));
                     }
                     else
-                        sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
+                        sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_NO_CHANNEL, new String[]{args[1]}));
                 }
         }
     }

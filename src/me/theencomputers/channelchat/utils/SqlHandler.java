@@ -7,13 +7,10 @@
 package me.theencomputers.channelchat.utils;
 
 import me.theencomputers.channelchat.ChannelInfo;
-import me.theencomputers.channelchat.Commands.Channel;
-import me.theencomputers.channelchat.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.world.GenericGameEvent;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -34,17 +31,16 @@ public class SqlHandler {
             + "currentChannel VARCHAR(255), "
             + "ChannelList TEXT(65535)"
             + ")";
-
     String deleteChannelSQL = "DELETE FROM channels WHERE name = ?";
-    static PreparedStatement deleteChannelStatement = null;
-    static PreparedStatement insertChannelStatement = null;
-    static PreparedStatement insertPlayerStatement = null;
-    private static PreparedStatement selectPlayerStatement = null;
+    PreparedStatement deleteChannelStatement = null;
+    PreparedStatement insertChannelStatement = null;
+    PreparedStatement insertPlayerStatement = null;
+    PreparedStatement selectPlayerStatement = null;
+    PreparedStatement selectChannelStatement = null;
 
     private static Connection connection = null;
     private static Statement statement = null;
     private static String sqlUrl, sqlUsername, sqlPassword;
-    private static PreparedStatement selectChannelStatement = null;
 
 
     ChannelManager cm = new ChannelManager();
@@ -52,7 +48,6 @@ public class SqlHandler {
         sqlUrl = url;
         sqlPassword = password;
         sqlUsername = username;
-
 
         try {
             Bukkit.getConsoleSender().sendMessage("[Channel Chat] Attempting to connect to SQL...");
@@ -67,10 +62,9 @@ public class SqlHandler {
 
 
             Bukkit.getConsoleSender().sendMessage("SQL connectivity has been established");
-            selectPlayerStatement = connection.prepareStatement(selectPlayerSQL);
             selectChannelStatement = connection.prepareStatement(selectChannelSQL);
-            insertChannelStatement = connection.prepareStatement(insertChannelSQL);
-            deleteChannelStatement = connection.prepareStatement(deleteChannelSQL);
+
+
 
         } catch (ClassNotFoundException e) {
             Bukkit.getConsoleSender().sendMessage("[ChannelChat] Critical: Failed to load SQL please check credentials. Aborting...");
@@ -80,7 +74,9 @@ public class SqlHandler {
             Bukkit.getConsoleSender().sendMessage("[Channel Chat] Critical: Failed to load SQL please check credentials. Aborting...");
             throw new RuntimeException(e);
         } finally {
+
             try {
+                connection.close();
                 if (statement != null) statement.close();
                 if (connection != null) connection.close();
             } catch (SQLException e) {
@@ -123,16 +119,34 @@ public class SqlHandler {
         }
         return true;
     }
-    public void addChannel(ChannelInfo c){
-        try {
 
-            connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
-            insertChannelStatement.setString(1, c.name);
-            insertChannelStatement.setString(2, c.format);
-            insertChannelStatement.setString(3, c.permission);
-            insertChannelStatement.setFloat(4, c.radius);
-            insertChannelStatement.executeUpdate();
-        }catch (SQLException ec){}
+
+    public void addChannel(ChannelInfo c){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                    try {
+                        connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
+                        insertChannelStatement = connection.prepareStatement(insertChannelSQL);
+                        insertChannelStatement.setString(1, c.name);
+                        insertChannelStatement.setString(2, c.format);
+                        insertChannelStatement.setString(3, c.permission);
+                        insertChannelStatement.setFloat(4, c.radius);
+                        insertChannelStatement.executeUpdate();
+                    } catch (SQLException ec) {
+                    }
+                    finally {
+                        if(connection != null) {
+                            try {
+                                connection.close();
+                            } catch (SQLException e) {
+                            }
+                        }
+                    }
+            }
+        }).start();
+
     }
     public void addPlayer(Player p, ChannelInfo mainChannel, ArrayList<ChannelInfo> channelList){
         new Thread(new Runnable() {
@@ -143,16 +157,23 @@ public class SqlHandler {
                     insertPlayerStatement = connection.prepareStatement(insertPlayerSQL);
 
                     insertPlayerStatement.setString(1, p.getUniqueId().toString());
-                    insertPlayerStatement.setString(2, mainChannel.name);
+                    insertPlayerStatement.setString(2,  mainChannel == null  || mainChannel.name.equals("") ?  " ": mainChannel.name);
                     String channelListStr = "";
                     for (int i = 0; i < channelList.size(); i++) {
                         if (channelList.get(i) != null)
                             channelListStr += channelList.get(i).name + "|";
                     }
-                    insertPlayerStatement.setString(3, channelListStr);
+                    insertPlayerStatement.setString(3, channelListStr.equals("")  ? " ": channelListStr);
                     insertPlayerStatement.executeUpdate();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                }
+                finally {
+                    if (connection != null) {
+                        try {
+                            connection.close();
+                        } catch (SQLException e) {
+                        }
+                    }
                 }
             }
         }).start();
@@ -166,8 +187,9 @@ public class SqlHandler {
                 try {
                     connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
                     resultSet = null;
-                    selectChannelStatement.setString(1, p.getUniqueId().toString());
-                    resultSet = selectChannelStatement.executeQuery();
+                    selectPlayerStatement = connection.prepareStatement(selectPlayerSQL);
+                    selectPlayerStatement.setString(1, p.getUniqueId().toString());
+                    resultSet = selectPlayerStatement.executeQuery();
 
                     if (resultSet.next()) {
 
@@ -178,14 +200,22 @@ public class SqlHandler {
                         String[] infoStrList = channelList.split("\\|");
 
                         for (int i = 0; i < infoStrList.length; i++) {
+                            if(infoStrList[i].equals(" "))
+                                continue;
+                            if(cm.doesChannelExist(infoStrList[i]))
+                                _retrieveChannel(infoStrList[i]);
                             infoList.add(cm.getChannel(infoStrList[i]));
                         }
+                        if(!currentChannel.equals("") && !currentChannel.equals(" ")) {
+                            _retrieveChannel(currentChannel);
+                        }
                         cm.addPlayerChannelList(p, infoList);
-                        if (!currentChannel.equals(""))
-                            cm.addPlayerMainChannel(p, cm.getChannel(currentChannel));
+                        if (!currentChannel.equals("")) {
+                            cm.addPlayerToChannel(cm.getChannel(currentChannel), p,  false);
+                        }
                         else {
                             ChannelInfo blankChannel = new ChannelInfo("", "", 0, "");
-                            cm.addPlayerMainChannel(p, blankChannel);
+                            cm.addPlayerMainChannel(p, blankChannel, false);
                         }
                         returnVal[0] = true;
 
@@ -193,22 +223,22 @@ public class SqlHandler {
                         ChannelInfo blankChannel = new ChannelInfo("", "", 0, "");
                         ArrayList<ChannelInfo> blankChannelList = new ArrayList<>();
                         cm.addPlayerChannelList(p, blankChannelList);
-                        cm.addPlayerMainChannel(p, blankChannel);
+                        cm.addPlayerMainChannel(p, blankChannel, false);
                     }
                 } catch (SQLException e) {
                 } finally {
                     if (resultSet != null) {
                         try {
+                            connection.close();
                             resultSet.close();
                         } catch (SQLException e) {
-                            throw new RuntimeException(e);
                         }
                     }
                     if (selectChannelStatement != null) {
                         try {
+                            connection.close();
                             selectChannelStatement.close();
                         } catch (SQLException e) {
-                            throw new RuntimeException(e);
                         }
                     }
                 }
@@ -223,38 +253,7 @@ public class SqlHandler {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
-                ResultSet resultSet = null;
-                try {
-                    connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
-                    resultSet = null;
-                    selectPlayerStatement = connection.prepareStatement(selectPlayerSQL);
-                    selectPlayerStatement.setString(1, channelName);
-                    resultSet = selectPlayerStatement.executeQuery();
-
-                    if (resultSet.next()) {
-                        String name = resultSet.getString("name");
-                        String format = resultSet.getString("format");
-                        String permission = resultSet.getString("permission");
-                        float radius = resultSet.getFloat("radius");
-                        //Bukkit.getConsoleSender().sendMessage("Retrieved data: " + name);     //DEBUG
-                        cm.addChannel(name, permission, radius, format);
-
-                    } else {
-                        returnVal[0] = false;
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    if (resultSet != null) {
-                        try {
-                            resultSet.close();
-                            if (selectChannelStatement != null) selectChannelStatement.close();
-
-                        } catch (SQLException e) {
-                        }
-                    }
-                }
+                returnVal[0] = _retrieveChannel(channelName);
             }
         }).start();
         return returnVal[0];
@@ -265,6 +264,8 @@ public class SqlHandler {
             public void run() {
 
                 try {
+                    connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
+                    deleteChannelStatement = connection.prepareStatement(deleteChannelSQL);
                     deleteChannelStatement.setString(1, channelName);
                     int rowsAffected = deleteChannelStatement.executeUpdate();
 
@@ -274,18 +275,54 @@ public class SqlHandler {
                         Bukkit.getConsoleSender().sendMessage("No channel found with the name: " + channelName);
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
                 } finally {
                     if (deleteChannelStatement != null) {
                         try {
+                            connection.close();
                             deleteChannelStatement.close();
                         } catch (SQLException e) {
-                            throw new RuntimeException(e);
                         }
                     }
                 }
             }
     }).start();
+    }
+    private boolean _retrieveChannel(String channelName){
+        if(channelName.equals(""))
+            return true;
+        boolean returnVal = false;
+
+                ResultSet resultSet = null;
+                try {
+                    connection = DriverManager.getConnection(sqlUrl, sqlUsername, sqlPassword);
+                    selectChannelStatement = connection.prepareStatement(selectChannelSQL);
+                    resultSet = null;
+                    selectPlayerStatement = connection.prepareStatement(selectChannelSQL);
+                    selectPlayerStatement.setString(1, channelName);
+                    resultSet = selectPlayerStatement.executeQuery();
+                    if (resultSet.next()) {
+                        String name = resultSet.getString("name");
+                        String format = resultSet.getString("format");
+                        String permission = resultSet.getString("permission");
+                        float radius = resultSet.getFloat("radius");
+                        cm.addChannel(name, permission, radius, format,false);
+
+                    } else {
+                        returnVal = false;
+                    }
+                } catch (SQLException e) {
+                } finally {
+                    if (resultSet != null) {
+                        try {
+                            connection.close();
+                            resultSet.close();
+                            if (selectChannelStatement != null) selectChannelStatement.close();
+
+                        } catch (SQLException e) {
+                        }
+                    }
+                }
+        return returnVal;
     }
 
 }

@@ -30,9 +30,6 @@ public class Main extends JavaPlugin implements Listener{
     Channel c = new Channel();
     public void onEnable(){
         plugin = this;
-        new BukkitRunnable() {
-        @Override
-        public void run () {
 
             //Load config
             cfg.init(config);
@@ -43,8 +40,6 @@ public class Main extends JavaPlugin implements Listener{
             Bukkit.getServer().getPluginManager().registerEvents(new JoinAndLeave(), plugin);
             c.init();
             getCommand("channel").setExecutor(c);
-        }
-    }.runTaskLater(this, 60);
 
 
 

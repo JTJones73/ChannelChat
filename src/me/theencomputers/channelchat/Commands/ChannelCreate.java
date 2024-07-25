@@ -21,7 +21,7 @@ public class ChannelCreate implements SubCommand{
     @Override
     public void executeSubCommand(CommandSender sender, String[] args) {
         if(cm.doesChannelExist(args[1])) {
-            sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_ALREADY_EXISTS, new String[]{args[1]}));
+            sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_ALREADY_EXISTS, new String[]{args[1]}));
             return;
         }
         String formatString = "";
@@ -29,8 +29,8 @@ public class ChannelCreate implements SubCommand{
             formatString += args[i] + " ";
         }
         formatString += args[args.length-1];
-        ChannelInfo c = cm.addChannel(args[1], args[2],parseFloat(args[3]), formatString);
-        sender.sendMessage(ConfigHandler.applyPlaceholders(ConfigHandler.CHANNEL_CREATED, new String[]{c.name}));
+        ChannelInfo c = cm.addChannel(args[1], args[2],parseFloat(args[3]), formatString, true);
+        sender.sendMessage(cfg.applyPlaceholders(ConfigHandler.CHANNEL_CREATED, new String[]{c.name}));
 
     }
 }
